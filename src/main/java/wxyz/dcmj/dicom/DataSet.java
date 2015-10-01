@@ -654,10 +654,19 @@ public class DataSet {
     public static void main(String[] args) throws Throwable {
         DataSet ds1 = new DataSet(new File("/tmp/1.dcm"));
         ds1.print(System.out);
+        CodeStringElement scse = new CodeStringElement(ds1, AttributeTag.SpecificCharacterSet);
+        SpecificCharacterSet scs = SpecificCharacterSet.get(new String[] { SpecificCharacterSet.DT_ISO_IR_192 });
+        scse.setValue(SpecificCharacterSet.DT_ISO_IR_192);
+        ds1.addElement(scse, true);
+        PersonNameElement rpne = new PersonNameElement(ds1, AttributeTag.ReferringPhysicianName, scs);
+        PersonName rpn = new PersonName();
+        rpn.setAphabeticGroup(new String[] { "Liu", "Wei", null, null, null });
+        rpn.setIdeographicGroup(new String[] { "刘", "伟", null, null, null });
+        rpne.setValue(rpn);
+        ds1.addElement(rpne, true);
         ds1.write(new File("/tmp/2.dcm"));
         DataSet ds2 = new DataSet(new File("/tmp/2.dcm"));
         ds2.print(System.out);
-
     }
 
 }

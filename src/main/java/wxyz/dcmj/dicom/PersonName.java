@@ -1,6 +1,5 @@
 package wxyz.dcmj.dicom;
 
-
 public class PersonName {
 
     public static final int ALPHABETIC_GROUP = 0;
@@ -27,12 +26,30 @@ public class PersonName {
         return getGroup(ALPHABETIC_GROUP);
     }
 
+    public void setAphabeticGroup(String[] aphabetic) {
+        for (int i = 0; i < 5; i++) {
+            alphabeticGroup()[i] = aphabetic[i];
+        }
+    }
+
     public String[] ideographicGroup() {
         return getGroup(IDEOGRAPHIC_GROUP);
     }
 
+    public void setIdeographicGroup(String[] ideographic) {
+        for (int i = 0; i < 5; i++) {
+            ideographicGroup()[i] = ideographic[i];
+        }
+    }
+
     public String[] phoneticGroup() {
         return getGroup(PHONETIC_GROUP);
+    }
+
+    public void setPhoneticGroup(String[] phonetic) {
+        for (int i = 0; i < 5; i++) {
+            phoneticGroup()[i] = phonetic[i];
+        }
     }
 
     protected String[] getGroup(int group) {
@@ -58,7 +75,7 @@ public class PersonName {
         String[][] cs = new String[3][5];
         for (int i = 0; i < groups.length; i++) {
             String group = groups[i];
-            String[] components = group.split("^");
+            String[] components = group.split("\\^");
             if (components.length > 5) {
                 throw new DicomException("Invalid PersonName(PN) value: " + s);
             }
@@ -102,6 +119,6 @@ public class PersonName {
         }
         return pn;
     }
-    
+
     // TODO
 }
