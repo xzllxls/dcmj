@@ -25,9 +25,6 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
-import wxyz.dcmj.dicom.element.OtherByteElement;
-import wxyz.dcmj.dicom.element.OtherWordElement;
-import wxyz.dcmj.dicom.element.SequenceElement;
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
 import wxyz.dcmj.dicom.io.EncapsulatedInputStream;
