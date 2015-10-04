@@ -1,6 +1,7 @@
 package wxyz.dcmj.dicom;
 
 import java.io.PrintStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
@@ -143,7 +144,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return _tag.group() > 0x0002;
     }
 
-    protected Long longValue() {
+    public Long longValue() {
         if (_values == null || _values.isEmpty()) {
             return null;
         }
@@ -160,7 +161,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected long longValue(long defaultValue) {
+    public long longValue(long defaultValue) {
         Long v = longValue();
         if (v == null) {
             return defaultValue;
@@ -169,7 +170,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected long[] longValues() {
+    public long[] longValues() {
         T v = value();
         if (v != null && (v instanceof Long)) {
             long[] vs = new long[_values.size()];
@@ -181,7 +182,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected Integer intValue() {
+    public Integer intValue() {
         if (_values == null || _values.isEmpty()) {
             return null;
         }
@@ -197,11 +198,13 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
             if (lv >= Integer.MIN_VALUE && lv <= Integer.MAX_VALUE) {
                 return lv.intValue();
             }
+        } else if (this instanceof IntegerStringElement) {
+            return Integer.parseInt((String) value);
         }
         return null;
     }
 
-    protected int intValue(int defaultValue) {
+    public int intValue(int defaultValue) {
         Integer v = intValue();
         if (v == null) {
             return defaultValue;
@@ -210,7 +213,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected int[] intValues() {
+    public int[] intValues() {
         T v = value();
         if (v != null && (v instanceof Long)) {
             int[] vs = new int[_values.size()];
@@ -222,7 +225,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected Short shortValue() {
+    public Short shortValue() {
         if (_values == null || _values.isEmpty()) {
             return null;
         }
@@ -245,7 +248,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected short shortValue(short defaultValue) throws Throwable {
+    public short shortValue(short defaultValue) throws Throwable {
         Short v = shortValue();
         if (v == null) {
             return defaultValue;
@@ -254,7 +257,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected short[] shortValues() {
+    public short[] shortValues() {
         T v = value();
         if (v != null && (v instanceof Short)) {
             short[] vs = new short[_values.size()];
@@ -266,7 +269,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected Double doubleValue() {
+    public Double doubleValue() {
         if (_values == null || _values.isEmpty()) {
             return null;
         }
@@ -287,7 +290,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected double doubleValue(double defaultValue) throws Throwable {
+    public double doubleValue(double defaultValue) throws Throwable {
         Double v = doubleValue();
         if (v == null) {
             return defaultValue;
@@ -296,7 +299,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected double[] doubleValues() {
+    public double[] doubleValues() {
         T v = value();
         if (v != null && (v instanceof Double)) {
             double[] vs = new double[_values.size()];
@@ -308,7 +311,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected Float floatValue() {
+    public Float floatValue() {
         if (_values == null || _values.isEmpty()) {
             return null;
         }
@@ -329,7 +332,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected float floatValue(float defaultValue) {
+    public float floatValue(float defaultValue) {
         Float v = floatValue();
         if (v == null) {
             return defaultValue;
@@ -338,7 +341,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected float[] floatValues() {
+    public float[] floatValues() {
         T v = value();
         if (v != null && (v instanceof Float)) {
             float[] vs = new float[_values.size()];
@@ -350,11 +353,26 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    protected String stringValue() {
-        return null;
+    public String stringValue() {
+        T value = value();
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String) {
+            return (String) value;
+        }
+        if (value instanceof Collection) {
+            // Collection, return empty string.
+            return "";
+        }
+        if (value.getClass().isArray()) {
+            // Array, return empty string.
+            return "";
+        }
+        return String.valueOf(value);
     }
 
-    protected String stringValue(String defaultValue) {
+    public String stringValue(String defaultValue) {
         String sv = stringValue();
         if (sv == null) {
             return defaultValue;
@@ -363,8 +381,47 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         }
     }
 
-    protected String[] stringValues() {
-        return null;
+    public String[] stringValues() {
+        List<T> values = values();
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        int size = values.size();
+        String[] svs = new String[size];
+        for (int i = 0; i < size; i++) {
+            T value = values.get(i);
+            if (value == null) {
+                svs[i] = null;
+            } else if (value instanceof String) {
+                svs[i] = (String) value;
+            } else if (value instanceof Collection) {
+                // Collection, return empty string.
+                svs[i] = "";
+            } else if (value.getClass().isArray()) {
+                // Array, return empty string.
+                svs[i] = "";
+            } else {
+                svs[i] = String.valueOf(value);
+            }
+        }
+        return svs;
+    }
+
+    public String singleStringValue(char delimiter, String defaultValue) {
+        String[] svs = stringValues();
+        if (svs == null || svs.length == 0) {
+            return defaultValue;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < svs.length; i++) {
+            if (i > 0) {
+                sb.append(delimiter);
+            }
+            if (svs[i] != null) {
+                sb.append(svs[i]);
+            }
+        }
+        return sb.toString();
     }
 
     public static final int MAX_ARRAY_SIZE_TO_DISPLAY = 10;

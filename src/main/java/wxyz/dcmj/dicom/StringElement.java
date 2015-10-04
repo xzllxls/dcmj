@@ -45,10 +45,12 @@ public abstract class StringElement extends DataElement<String> {
 
     protected abstract void validate(String value) throws Throwable;
 
+    @Override
     public String stringValue() {
         return value();
     }
 
+    @Override
     public String[] stringValues() {
         List<String> values = values();
         if (values == null || values.isEmpty()) {

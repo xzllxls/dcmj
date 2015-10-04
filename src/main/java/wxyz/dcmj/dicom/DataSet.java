@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -625,8 +626,44 @@ public class DataSet {
         }
     }
 
+    /**
+     * Returns the top level element with the given tag.
+     * 
+     * @param tag
+     * @return
+     */
     public DataElement element(AttributeTag tag) {
         return _des.get(tag);
+    }
+
+    public DataElement element(AttributeTag[] tags) {
+        DataElement de = _des.get(tags[0]);
+        if (de != null) {
+            if (tags.length == 1) {
+                return de;
+            } else { // tags.length > 1
+                if (de instanceof SequenceElement) {
+                    List<DataSet> dss = ((SequenceElement) de).value();
+                    if (dss != null) {
+                        for (DataSet ds : dss) {
+                            DataElement e = ds.element(Arrays.copyOfRange(tags, 1, tags.length));
+                            if (e != null) {
+                                return e;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean hasElement(AttributeTag tag) {
+        return _des.containsKey(tag);
+    }
+
+    public boolean hasElement(AttributeTag[] tags) {
+        return element(tags) != null;
     }
 
     private static boolean _scannedForImageIOPlugins = false;
@@ -636,6 +673,63 @@ public class DataSet {
             ImageIO.scanForPlugins();
             _scannedForImageIOPlugins = true;
         }
+    }
+
+    public int intValueOf(AttributeTag tag, int defaultValue) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return defaultValue;
+        }
+        return de.intValue(defaultValue);
+    }
+
+    public String stringValueOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return null;
+        }
+        return de.stringValue();
+    }
+
+    public String stringValueOf(AttributeTag tag, String defaultValue) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return defaultValue;
+        }
+        return de.stringValue(defaultValue);
+    }
+
+    public String singleStringValueOf(AttributeTag tag, char delimiter, String defaultValue) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return defaultValue;
+        }
+        return de.singleStringValue(delimiter, defaultValue);
+    }
+
+    public String buildInstanceTitle() {
+        StringBuilder sb = new StringBuilder();
+        String patientName = singleStringValueOf(AttributeTag.PatientName, '-', "");
+        patientName = patientName.replace('^', '.').replace('=', '_').trim();
+        patientName = StringUtils.trim(patientName, '-');
+        sb.append(patientName);
+        sb.append("[");
+        sb.append(singleStringValueOf(AttributeTag.PatientID, '-', ""));
+        sb.append("]:");
+        sb.append(singleStringValueOf(AttributeTag.StudyID, '-', ""));
+        sb.append("[");
+        sb.append(singleStringValueOf(AttributeTag.StudyDate, '-', ""));
+        sb.append("-");
+        sb.append(singleStringValueOf(AttributeTag.StudyDescription, '-', "").replace('/', '_').replace('\\', '_'));
+        sb.append("]:");
+        sb.append(singleStringValueOf(AttributeTag.SeriesNumber, '-', ""));
+        sb.append("[");
+        sb.append(singleStringValueOf(AttributeTag.Modality, '-', ""));
+        sb.append("-");
+        sb.append(singleStringValueOf(AttributeTag.SeriesDescription, '-', "").replace('/', '_').replace('\\', '_'));
+        sb.append("]:");
+        sb.append(singleStringValueOf(AttributeTag.InstanceNumber, '-', ""));
+        return sb.toString();
     }
 
     public void print(PrintStream ps, int indent) {
