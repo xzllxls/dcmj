@@ -20,7 +20,7 @@ import wxyz.dcmj.dicom.io.DicomOutputStream;
  * 
  *
  */
-public class UnknownElement extends DataElement<byte[]> {
+public class UnknownElement extends InlineBinaryElement<byte[]> {
 
     public UnknownElement(DataSet dataSet, AttributeTag tag) {
         super(dataSet, tag, ValueRepresentation.UN);
@@ -55,5 +55,15 @@ public class UnknownElement extends DataElement<byte[]> {
         byte[] b = new byte[(int) vl];
         in.readFully(b);
         setValue(b);
+    }
+
+    @Override
+    public byte[] valueToBytes(boolean bigEndian) {
+        return value();
+    }
+
+    @Override
+    public byte[] bytesToValue(byte[] b, boolean bigEndian) {
+        return b;
     }
 }

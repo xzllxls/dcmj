@@ -2,6 +2,7 @@ package wxyz.dcmj.dicom;
 
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
+import wxyz.dcmj.dicom.util.ByteUtils;
 
 /**
  * OD
@@ -21,7 +22,7 @@ import wxyz.dcmj.dicom.io.DicomOutputStream;
  * 
  *
  */
-public class OtherDoubleElement extends DataElement<double[]> {
+public class OtherDoubleElement extends InlineBinaryElement<double[]> {
 
     public static final long MAX_BYTES_PER_VALUE = 0xfffffff8l;
 
@@ -54,4 +55,25 @@ public class OtherDoubleElement extends DataElement<double[]> {
         setValue(d);
     }
 
+    @Override
+    public byte[] valueToBytes(boolean bigEndian) {
+        double[] value = value();
+        if (value == null || value.length == 0) {
+            return null;
+        }
+        byte[] b = new byte[value.length * Double.BYTES];
+        ByteUtils.toByte(value, 0, value.length, b, 0, bigEndian);
+        return b;
+    }
+
+    @Override
+    public double[] bytesToValue(byte[] b, boolean bigEndian) {
+        if (b == null || b.length == 0) {
+            return null;
+        }
+        assert b.length % Double.BYTES == 0;
+        double[] d = new double[b.length / Double.BYTES];
+        ByteUtils.toDouble(d, 0, b, 0, b.length, bigEndian);
+        return d;
+    }
 }

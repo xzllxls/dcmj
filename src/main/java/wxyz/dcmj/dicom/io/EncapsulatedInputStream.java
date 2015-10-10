@@ -76,9 +76,9 @@ public class EncapsulatedInputStream extends InputStream {
     }
 
     public final void readUnsignedShort(short[] w, int offset, int len) throws Throwable {
-        long before = _in.bytesRead();
+        long before = _in.position();
         this._in.readUnsignedShort(w, offset, len);
-        long after = _in.bytesRead();
+        long after = _in.position();
         _bytesRead += (after - before);
     }
 

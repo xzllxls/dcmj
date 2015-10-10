@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -56,26 +55,73 @@ public class DataSet {
      */
     protected double compressionRatio = 0.0;
 
+    /*
+     * source file (if known)
+     */
+    private File _sourceFile;
+
+    /*
+     * The sequence element that contains this dataset (item). For top level
+     * dataset, _sequence should always be null.
+     */
+    private SequenceElement _sequence;
+
     public DataSet() {
-        _des = new TreeMap<AttributeTag, DataElement>();
+        this(null);
     }
 
-    public DataSet(DicomInputStream in) throws Throwable {
+    public DataSet(SequenceElement sequence) {
         _des = new TreeMap<AttributeTag, DataElement>();
-        read(in, Constants.UNDEFINED_LENGTH, null, false, null);
+        _sequence = sequence;
     }
 
-    public DataSet(File file) throws Throwable {
-        DicomInputStream in = new DicomInputStream(new FileInputStream(file));
-        _des = new TreeMap<AttributeTag, DataElement>();
+    public File sourceFile() {
+        return _sourceFile;
+    }
+
+    SequenceElement sequence() {
+        return _sequence;
+    }
+
+    void setSequence(SequenceElement sequence) {
+        _sequence = sequence;
+    }
+
+    public boolean isSeqenceItem() {
+        return _sequence != null;
+    }
+
+    public void read(File file) throws Throwable {
+        read(file, null);
+    }
+
+    public void read(File file, AttributeTag stopAtTag) throws Throwable {
+        _sourceFile = file;
+        DicomInputStream in = new DicomInputStream(file);
         try {
-            read(in, Constants.UNDEFINED_LENGTH, null, false, null);
+            read(in, stopAtTag);
         } finally {
             in.close();
         }
     }
 
-    public void read(DicomInputStream in, long length, SpecificCharacterSet scs, boolean metaOnly, AttributeTag stopAtTag) throws Throwable {
+    public void read(ImageInputStream iis) throws Throwable {
+        read(iis, null);
+    }
+
+    public void read(ImageInputStream iis, AttributeTag stopAtTag) throws Throwable {
+        read(new DicomInputStream(iis), stopAtTag);
+    }
+
+    public void read(DicomInputStream in) throws Throwable {
+        read(in, null);
+    }
+
+    public void read(DicomInputStream in, AttributeTag stopAtTag) throws Throwable {
+        read(in, Constants.UNDEFINED_LENGTH, null, false, stopAtTag);
+    }
+
+    public void read(DicomInputStream in, long length, SpecificCharacterSet scs, boolean fileMetaInfoOnly, AttributeTag stopAtTag) throws Throwable {
         if (in.isReadingDataSet()) {
             // Test to see whether or not a codec needs to be pushed on the
             // stream ... after the first time, the TransferSyntax will always
@@ -87,7 +133,7 @@ public class DataSet {
             }
         }
         final boolean lengthUndefined = (length == Constants.UNDEFINED_LENGTH);
-        final long startOffset = in.bytesRead();
+        final long startOffset = in.position();
         final long endOffset = lengthUndefined ? Constants.UNDEFINED_LENGTH : (startOffset + length - 1);
 
         int rows = 0;
@@ -96,18 +142,11 @@ public class DataSet {
         int samplesPerPixel = 1;
         int bitsAllocated = 16;
 
-        while (in.available() > 0 && (lengthUndefined || in.bytesRead() < endOffset)) {
+        while (in.available() > 0 && (lengthUndefined || in.position() < endOffset)) {
             /*
              * read tag
              */
             AttributeTag tag = AttributeTag.read(in);
-
-            /*
-             * stop at tag?
-             */
-            if (stopAtTag != null && tag.equals(stopAtTag)) {
-                return;
-            }
 
             /*
              * item delimitation tag encountered?
@@ -129,7 +168,7 @@ public class DataSet {
                 // however, try to work around Philips bug ...
                 // always implicit VR form for items and delimiters
                 long vl = in.readUnsignedInt();
-                System.err.println("Ignoring bad Item at " + in.bytesRead() + " " + tag + " VL=<0x" + Long.toHexString(vl) + ">");
+                System.err.println("Ignoring bad Item at " + in.position() + " " + tag + " VL=<0x" + Long.toHexString(vl) + ">");
                 continue;
             }
 
@@ -201,11 +240,23 @@ public class DataSet {
             }
 
             /*
+             * stop at tag? (only stop at the matching top level element.)
+             */
+            if (stopAtTag != null && tag.equals(stopAtTag) && !isSeqenceItem()) {
+                // Add the element but do not read its value
+                DataElement de = DataElement.create(this, tag, vr, scs);
+                de.setSource(sourceFile(), in.position(), vl);
+                addElement(de);
+                return;
+            }
+
+            /*
              * create the element and read its value.
              */
             DataElement de = null;
             if (vr == ValueRepresentation.SQ) {
                 de = DataElement.create(this, tag, vr, scs);
+                de.setSource(sourceFile(), in.position(), vl);
                 de.readValue(in, vl);
             } else if (vl != Constants.UNDEFINED_LENGTH) {
                 /*
@@ -230,6 +281,7 @@ public class DataSet {
                             + ") when recovering from incorrect Implicit VR element encoding in Explicit VR Transfer Syntax - giving up.");
                 }
                 de = DataElement.create(this, tag, vr, scs);
+                de.setSource(sourceFile(), in.position(), vl);
                 de.readValue(in, vl);
             } else if (vl == Constants.UNDEFINED_LENGTH && tag.equals(AttributeTag.PixelData)) {
                 boolean doneReadingEncapsulatedData = false;
@@ -452,7 +504,7 @@ public class DataSet {
                     // syntax for reading data
                     read(in, metaLength, scs, false, stopAtTag);
                     in.setReadingDataSet();
-                    if (metaOnly) {
+                    if (fileMetaInfoOnly) {
                         // read only meta data header.
                         break;
                     } else {
@@ -683,12 +735,77 @@ public class DataSet {
         return de.intValue(defaultValue);
     }
 
+    public int[] intValuesOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return null;
+        }
+        return de.intValues();
+    }
+
+    public short shortValueOf(AttributeTag tag, short defaultValue) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return defaultValue;
+        }
+        return de.shortValue(defaultValue);
+    }
+
+    public short[] shortValuesOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return null;
+        }
+        return de.shortValues();
+    }
+
+    public float floatValueOf(AttributeTag tag, float defaultValue) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return defaultValue;
+        }
+        return de.floatValue(defaultValue);
+    }
+
+    public float[] floatValuesOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de == null) {
+            return null;
+        }
+        return de.floatValues();
+    }
+
+    public List<DataSet> sequenceItemsOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de != null && de instanceof SequenceElement) {
+            return ((SequenceElement) de).value();
+        } else {
+            return null;
+        }
+    }
+
+    public DataSet sequenceItemOf(AttributeTag tag, int itemIndex) {
+        List<DataSet> items = sequenceItemsOf(tag);
+        if (items != null && items.size() > itemIndex) {
+            return items.get(itemIndex);
+        }
+        return null;
+    }
+
     public String stringValueOf(AttributeTag tag) {
         DataElement de = element(tag);
         if (de == null) {
             return null;
         }
         return de.stringValue();
+    }
+
+    public byte[] otherByteValueOf(AttributeTag tag) {
+        DataElement de = element(tag);
+        if (de != null && de instanceof OtherByteElement) {
+            return ((OtherByteElement) de).value();
+        }
+        return null;
     }
 
     public String stringValueOf(AttributeTag tag, String defaultValue) {
@@ -745,8 +862,13 @@ public class DataSet {
         print(ps, 0);
     }
 
+    public Collection<DataElement> elements() {
+        return _des.values();
+    }
+
     public static void main(String[] args) throws Throwable {
-        DataSet ds1 = new DataSet(new File("/tmp/1.dcm"));
+        DataSet ds1 = new DataSet();
+        ds1.read(new File("/Users/wliu5/Desktop/1.dcm"));
         ds1.print(System.out);
         CodeStringElement scse = new CodeStringElement(ds1, AttributeTag.SpecificCharacterSet);
         SpecificCharacterSet scs = SpecificCharacterSet.get(new String[] { SpecificCharacterSet.DT_ISO_IR_192 });
@@ -759,7 +881,8 @@ public class DataSet {
         rpne.setValue(rpn);
         ds1.addElement(rpne, true);
         ds1.write(new File("/tmp/2.dcm"));
-        DataSet ds2 = new DataSet(new File("/tmp/2.dcm"));
+        DataSet ds2 = new DataSet();
+        ds2.read(new File("/tmp/2.dcm"));
         ds2.print(System.out);
     }
 

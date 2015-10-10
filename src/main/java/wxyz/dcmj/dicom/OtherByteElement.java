@@ -3,7 +3,7 @@ package wxyz.dcmj.dicom;
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
 
-public class OtherByteElement extends DataElement<byte[]> {
+public class OtherByteElement extends InlineBinaryElement<byte[]> {
 
     public OtherByteElement(DataSet dataSet, AttributeTag tag) {
         super(dataSet, tag, ValueRepresentation.OB);
@@ -17,11 +17,6 @@ public class OtherByteElement extends DataElement<byte[]> {
             int len = value().length;
             return len % 2 == 0 ? len : (len + 1);
         }
-    }
-
-    @Override
-    protected boolean allowMultipleValues() {
-        return false;
     }
 
     @Override
@@ -44,6 +39,16 @@ public class OtherByteElement extends DataElement<byte[]> {
         byte[] b = new byte[(int) vl];
         in.readFully(b);
         setValue(b);
+    }
+
+    @Override
+    public byte[] valueToBytes(boolean bigEndian) {
+        return value();
+    }
+
+    @Override
+    public byte[] bytesToValue(byte[] b, boolean bigEndian) {
+        return b;
     }
 
 }

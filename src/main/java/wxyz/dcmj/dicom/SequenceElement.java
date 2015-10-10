@@ -73,17 +73,17 @@ public class SequenceElement extends DataElement<List<DataSet>> {
 
     @Override
     protected void readValue(DicomInputStream in, long vl) throws Throwable {
-        long startOffset = in.bytesRead();
-        long endOffset = (vl == Constants.UNDEFINED_LENGTH) ? Constants.UNDEFINED_LENGTH : in.bytesRead() + vl - 1;
+        long startOffset = in.position();
+        long endOffset = (vl == Constants.UNDEFINED_LENGTH) ? Constants.UNDEFINED_LENGTH : in.position() + vl - 1;
         List<DataSet> items = new Vector<DataSet>();
-        while (/* i.available() > 0 && */(vl == Constants.UNDEFINED_LENGTH || in.bytesRead() < endOffset)) {
+        while (/* i.available() > 0 && */(vl == Constants.UNDEFINED_LENGTH || in.position() < endOffset)) {
             AttributeTag tag = AttributeTag.read(in);
             // always implicit VR form for items and delimiters
             long itemVL = in.readUnsignedInt();
             if (tag.equals(AttributeTag.SequenceDelimitationItem)) {
                 break;
             } else if (tag.equals(AttributeTag.Item)) {
-                DataSet ds = new DataSet();
+                DataSet ds = new DataSet(this);
                 ds.read(in, itemVL, specificCharacterSet(), false, null);
                 items.add(ds);
             } else {
@@ -93,6 +93,16 @@ public class SequenceElement extends DataElement<List<DataSet>> {
         if (!items.isEmpty()) {
             addValue(items);
         }
+    }
+
+    @Override
+    protected void addValue(List<DataSet> value) throws Throwable {
+        if (value != null) {
+            for (DataSet item : value) {
+                item.setSequence(this);
+            }
+        }
+        super.addValue(value);
     }
 
     public void print(PrintStream ps, int indent) {

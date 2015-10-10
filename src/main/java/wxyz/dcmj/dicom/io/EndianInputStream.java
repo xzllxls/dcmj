@@ -13,7 +13,7 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
 
     private boolean _bigEndian = false;
     private byte[] _buffer = new byte[8];
-    private long _bytesRead = 0;
+    private long _position = 0;
     private long _mark = 0;
 
     protected EndianInputStream(InputStream in, boolean bigEndian) {
@@ -26,7 +26,7 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
     public synchronized int read() throws IOException {
         int b = super.read();
         if (b > 0) {
-            _bytesRead++;
+            _position++;
         }
         return b;
     }
@@ -42,7 +42,7 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
 
         int bytesRead = super.read(b, off, len);
         if (bytesRead > 0) {
-            _bytesRead += bytesRead;
+            _position += bytesRead;
         }
         return bytesRead;
     }
@@ -168,9 +168,9 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
 
         readFully(_buffer, 0, 4);
         if (_bigEndian) {
-            return ((_buffer[0] & 0xff) << 24) | ((_buffer[1] & 0xff) << 16) | ((_buffer[2] & 0xff) << 8) | ((_buffer[3] & 0xff) << 0);
+            return ((_buffer[0] & 0xff) << 24) | ((_buffer[1] & 0xff) << 16) | ((_buffer[2] & 0xff) << 8) | ((_buffer[3] & 0xff));
         } else {
-            return ((_buffer[3] & 0xff) << 24) | ((_buffer[2] & 0xff) << 16) | ((_buffer[1] & 0xff) << 8) | ((_buffer[0] & 0xff) << 0);
+            return ((_buffer[3] & 0xff) << 24) | ((_buffer[2] & 0xff) << 16) | ((_buffer[1] & 0xff) << 8) | ((_buffer[0] & 0xff));
         }
     }
 
@@ -395,7 +395,7 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
     public synchronized long skip(long n) throws IOException {
         long bytesRead = super.skip(n);
         if (bytesRead > 0) {
-            _bytesRead += bytesRead;
+            _position += bytesRead;
         }
         return bytesRead;
     }
@@ -442,7 +442,7 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
     @Override
     public synchronized void mark(int readlimit) {
         super.mark(readlimit);
-        _mark = _bytesRead;
+        _mark = _position;
     }
 
     @Override
@@ -455,11 +455,15 @@ public class EndianInputStream extends FilterInputStream implements DataInput {
             throw new IOException("Mark not supported.");
         }
         super.reset();
-        _bytesRead = _mark;
+        _position = _mark;
     }
 
-    public synchronized long bytesRead() {
-        return _bytesRead;
+    public synchronized long position() {
+        return _position;
+    }
+
+    protected synchronized void setPosition(long position) {
+        _position = position;
     }
 
 }

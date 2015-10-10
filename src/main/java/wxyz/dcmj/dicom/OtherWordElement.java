@@ -2,6 +2,7 @@ package wxyz.dcmj.dicom;
 
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
+import wxyz.dcmj.dicom.util.ByteUtils;
 
 /**
  * OW
@@ -22,7 +23,7 @@ import wxyz.dcmj.dicom.io.DicomOutputStream;
  * 
  *
  */
-public class OtherWordElement extends DataElement<short[]> {
+public class OtherWordElement extends InlineBinaryElement<short[]> {
 
     public OtherWordElement(DataSet dataSet, AttributeTag tag) {
         super(dataSet, tag, ValueRepresentation.OW);
@@ -59,6 +60,28 @@ public class OtherWordElement extends DataElement<short[]> {
         short[] w = new short[(int) (vl / 2)];
         in.readUnsignedShort(w);
         setValue(w);
+    }
+
+    @Override
+    public byte[] valueToBytes(boolean bigEndian) {
+        short[] value = value();
+        if (value == null || value.length == 0) {
+            return null;
+        }
+        byte[] b = new byte[value.length * Short.BYTES];
+        ByteUtils.toByte(value, 0, value.length, b, 0, bigEndian);
+        return b;
+    }
+
+    @Override
+    public short[] bytesToValue(byte[] b, boolean bigEndian) {
+        if (b == null || b.length == 0) {
+            return null;
+        }
+        assert b.length % Short.BYTES == 0;
+        short[] s = new short[b.length / Short.BYTES];
+        ByteUtils.toShort(s, 0, b, 0, b.length, bigEndian);
+        return s;
     }
 
 }

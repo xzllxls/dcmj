@@ -64,13 +64,13 @@ public class EndianOutputStream extends FilterOutputStream implements DataOutput
 
     private byte _buffer[] = new byte[8];
 
-    protected long _bytesWritten = 0;
+    protected long _position = 0;
 
     public EndianOutputStream(OutputStream out, boolean bigEndian) {
 
         super(out);
         _bigEndian = bigEndian;
-        _bytesWritten = 0;
+        _position = 0;
     }
 
     public boolean bigEndian() {
@@ -78,9 +78,13 @@ public class EndianOutputStream extends FilterOutputStream implements DataOutput
         return _bigEndian;
     }
 
-    public long bytesWritten() {
+    public long position() {
 
-        return _bytesWritten;
+        return _position;
+    }
+
+    protected void setPosition(long position) {
+        _position = position;
     }
 
     @Override
@@ -108,14 +112,14 @@ public class EndianOutputStream extends FilterOutputStream implements DataOutput
     public synchronized void write(byte b[], int off, int len) throws IOException {
 
         out.write(b, off, len);
-        _bytesWritten += len;
+        _position += len;
     }
 
     @Override
     public synchronized void write(int b) throws IOException {
 
         out.write(b);
-        _bytesWritten++;
+        _position++;
     }
 
     @Override

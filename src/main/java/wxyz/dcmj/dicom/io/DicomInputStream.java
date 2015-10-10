@@ -1,7 +1,11 @@
 package wxyz.dcmj.dicom.io;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.imageio.stream.ImageInputStream;
 
 import wxyz.dcmj.dicom.DicomException;
 import wxyz.dcmj.dicom.SpecificCharacterSet;
@@ -14,6 +18,7 @@ public class DicomInputStream extends EndianInputStream {
     private TransferSyntax _ts;
     private boolean _readingDataSet;
     private long _dataSetOffset;
+    private File _file; // reference to the input file (if applicable).
 
     private void initTransferSyntax(String uid) throws Throwable {
         _tsFileMetaInfo = null;
@@ -133,6 +138,16 @@ public class DicomInputStream extends EndianInputStream {
         // meta header or data)
     }
 
+    public DicomInputStream(ImageInputStream iis) throws Throwable {
+        this(new ImageInputStreamAdapter(iis));
+        setPosition(iis.getStreamPosition());
+    }
+
+    public DicomInputStream(File file) throws Throwable {
+        this(new FileInputStream(file));
+        _file = file;
+    }
+
     public DicomInputStream(InputStream i) throws Throwable {
         this(i, null);
     }
@@ -140,6 +155,15 @@ public class DicomInputStream extends EndianInputStream {
     public DicomInputStream(InputStream i, String tsUID) throws Throwable {
         super(i, false);
         initTransferSyntax(tsUID);
+    }
+
+    /**
+     * The input file if known.
+     * 
+     * @return
+     */
+    public File file() {
+        return _file;
     }
 
     public void setDataSetTransferSyntax(TransferSyntax ts) {

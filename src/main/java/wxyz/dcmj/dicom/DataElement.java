@@ -1,5 +1,6 @@
 package wxyz.dcmj.dicom;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,10 +13,17 @@ import wxyz.dcmj.dicom.io.DicomOutputStream;
 @SuppressWarnings("rawtypes")
 public abstract class DataElement<T> implements Comparable<DataElement> {
 
+    public static final int MAX_ARRAY_SIZE_TO_DISPLAY = 256;
     private DataSet _dataSet;
     private AttributeTag _tag;
     private ValueRepresentation _vr;
     private List<T> _values;
+
+    //@formatter:off
+    private File _sourceFile;         // optional: only useful if input source is a File.
+    private long _sourceOffset;       // optional: only useful if input source is a File.
+    private long _sourceValueLength;  // optional: useful for inline binary elements when not reading their values (to save memory)
+    //@formatter:on
 
     protected DataElement(DataSet dataSet, AttributeTag tag, ValueRepresentation vr) {
         _dataSet = dataSet;
@@ -31,6 +39,10 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
      */
     public DataSet dataSet() {
         return _dataSet;
+    }
+
+    public boolean inSeqenceItem() {
+        return _dataSet != null && _dataSet.isSeqenceItem();
     }
 
     public AttributeTag tag() {
@@ -86,6 +98,24 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
     }
 
     public abstract long valueLength();
+
+    void setSource(File sourceFile, long sourceOffset, long sourceValueLength) {
+        _sourceFile = sourceFile;
+        _sourceOffset = sourceOffset;
+        _sourceValueLength = sourceValueLength;
+    }
+
+    public File sourceFile() {
+        return _sourceFile;
+    }
+
+    public long sourceOffset() {
+        return _sourceOffset;
+    }
+
+    public long sourceValueLength() {
+        return _sourceValueLength;
+    }
 
     public int valueMultiplicity() {
         if (_values == null) {
@@ -248,7 +278,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return null;
     }
 
-    public short shortValue(short defaultValue) throws Throwable {
+    public short shortValue(short defaultValue) {
         Short v = shortValue();
         if (v == null) {
             return defaultValue;
@@ -259,12 +289,17 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
 
     public short[] shortValues() {
         T v = value();
-        if (v != null && (v instanceof Short)) {
-            short[] vs = new short[_values.size()];
-            for (int i = 0; i < vs.length; i++) {
-                vs[i] = (Short) _values.get(i);
+        if (v != null) {
+            if (v instanceof Short) {
+                short[] vs = new short[_values.size()];
+                for (int i = 0; i < vs.length; i++) {
+                    vs[i] = (Short) _values.get(i);
+                }
+                return vs;
+            } else if (v instanceof short[]) {
+                // inline binary OW: VM should always be 1.
+                return (short[]) v;
             }
-            return vs;
         }
         return null;
     }
@@ -301,12 +336,17 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
 
     public double[] doubleValues() {
         T v = value();
-        if (v != null && (v instanceof Double)) {
-            double[] vs = new double[_values.size()];
-            for (int i = 0; i < vs.length; i++) {
-                vs[i] = (Double) _values.get(i);
+        if (v != null) {
+            if (v instanceof Double) {
+                double[] vs = new double[_values.size()];
+                for (int i = 0; i < vs.length; i++) {
+                    vs[i] = (Double) _values.get(i);
+                }
+                return vs;
+            } else if (v instanceof double[]) {
+                // inline binary OD: VM should always be 1
+                return (double[]) v;
             }
-            return vs;
         }
         return null;
     }
@@ -343,12 +383,17 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
 
     public float[] floatValues() {
         T v = value();
-        if (v != null && (v instanceof Float)) {
-            float[] vs = new float[_values.size()];
-            for (int i = 0; i < vs.length; i++) {
-                vs[i] = (Float) _values.get(i);
+        if (v != null) {
+            if (v instanceof Float) {
+                float[] vs = new float[_values.size()];
+                for (int i = 0; i < vs.length; i++) {
+                    vs[i] = (Float) _values.get(i);
+                }
+                return vs;
+            } else if (v instanceof float[]) {
+                // inline binary OF: VM should always be 1
+                return (float[]) v;
             }
-            return vs;
         }
         return null;
     }
@@ -424,13 +469,12 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return sb.toString();
     }
 
-    public static final int MAX_ARRAY_SIZE_TO_DISPLAY = 10;
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         String definition = Dictionary.get().getDefinition(_tag);
-        sb.append(String.format("%s %2s VL=0x%08x %-40s", _tag, _vr, valueLength(), definition == null ? "" : definition));
+        long vl = valueLength() > 0 ? valueLength() : sourceValueLength();
+        sb.append(String.format("%s %2s VL=0x%08x %-40s", _tag, _vr, vl, definition == null ? "" : definition));
         if (_vr == ValueRepresentation.SQ) {
             return sb.toString();
         }

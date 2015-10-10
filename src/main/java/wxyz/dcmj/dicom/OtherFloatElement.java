@@ -2,6 +2,7 @@ package wxyz.dcmj.dicom;
 
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
+import wxyz.dcmj.dicom.util.ByteUtils;
 
 /**
  * OF
@@ -21,7 +22,7 @@ import wxyz.dcmj.dicom.io.DicomOutputStream;
  * 
  *
  */
-public class OtherFloatElement extends DataElement<float[]> {
+public class OtherFloatElement extends InlineBinaryElement<float[]> {
 
     public static final long MAX_BYTES_PER_VALUE = 0xfffffffcl;
 
@@ -36,11 +37,6 @@ public class OtherFloatElement extends DataElement<float[]> {
         }
         return value().length * 4;
     }
-
-//    @Override
-//    protected boolean allowMultipleValues() {
-//        return false;
-//    }
 
     @Override
     protected void writeValue(DicomOutputStream out) throws Throwable {
@@ -57,6 +53,28 @@ public class OtherFloatElement extends DataElement<float[]> {
         float[] f = new float[(int) vl];
         in.readFloat(f);
         setValue(f);
+    }
+
+    @Override
+    public byte[] valueToBytes(boolean bigEndian) {
+        float[] value = value();
+        if (value == null || value.length == 0) {
+            return null;
+        }
+        byte[] b = new byte[value.length * Float.BYTES];
+        ByteUtils.toByte(value, 0, value.length, b, 0, bigEndian);
+        return b;
+    }
+
+    @Override
+    public float[] bytesToValue(byte[] b, boolean bigEndian) {
+        if (b == null || b.length == 0) {
+            return null;
+        }
+        assert b.length % Float.BYTES == 0;
+        float[] f = new float[b.length / Float.BYTES];
+        ByteUtils.toFloat(f, 0, b, 0, b.length, bigEndian);
+        return f;
     }
 
 }
