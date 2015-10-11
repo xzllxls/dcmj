@@ -38,7 +38,7 @@ public abstract class StringElement extends DataElement<String> {
     }
 
     @Override
-    protected void addValue(String value) throws Throwable {
+    public void addValue(String value) throws Throwable {
         validate(value);
         super.addValue(value);
     }

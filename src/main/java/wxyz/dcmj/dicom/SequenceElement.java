@@ -96,7 +96,7 @@ public class SequenceElement extends DataElement<List<DataSet>> {
     }
 
     @Override
-    protected void addValue(List<DataSet> value) throws Throwable {
+    public void addValue(List<DataSet> value) throws Throwable {
         if (value != null) {
             for (DataSet item : value) {
                 item.setSequence(this);

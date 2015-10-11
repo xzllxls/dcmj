@@ -8,6 +8,9 @@ import javax.imageio.ImageReader;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
+import wxyz.dcmj.dicom.iio.metadata.DicomImageMetadataFormat;
+import wxyz.dcmj.dicom.iio.metadata.DicomStreamMetadataFormat;
+
 public class DicomImageReaderSpi extends ImageReaderSpi {
 
     public static final String VENDOR_NAME = "Wei Liu";
@@ -22,7 +25,8 @@ public class DicomImageReaderSpi extends ImageReaderSpi {
 
     public DicomImageReaderSpi() {
         this(VENDOR_NAME, VERSION, FORMAT_NAMES, FILE_SUFFIXES, MIME_TYPES, DicomImageReader.class.getName(), new Class[] { ImageInputStream.class }, new String[] { DicomImageWriterSpi.class
-                .getName() }, false, null, null, null, null, false, null, null, null, null);
+                .getName() }, false, DicomStreamMetadataFormat.FORMAT_NAME, DicomStreamMetadataFormat.class.getName(), null, null, false, DicomImageMetadataFormat.FORMAT_NAME,
+                DicomImageMetadataFormat.class.getName(), null, null);
     }
 
     @SuppressWarnings("rawtypes")

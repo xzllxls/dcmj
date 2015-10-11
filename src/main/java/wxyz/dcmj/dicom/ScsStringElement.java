@@ -17,7 +17,7 @@ public abstract class ScsStringElement extends StringElement {
     }
 
     @Override
-    protected void addValue(String value) throws Throwable {
+    public void addValue(String value) throws Throwable {
         super.addValue(value);
         // reset vl
         _vl = 0;

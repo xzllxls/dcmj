@@ -49,14 +49,14 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         return _tag;
     }
 
-    protected void setValue(T value) throws Throwable {
+    public void setValue(T value) throws Throwable {
         if (_values != null && !_values.isEmpty()) {
             _values.clear();
         }
         addValue(value);
     }
 
-    protected void addValue(T value) throws Throwable {
+    public void addValue(T value) throws Throwable {
         if (_values == null) {
             _values = new Vector<T>();
         } else {
@@ -105,12 +105,24 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         _sourceValueLength = sourceValueLength;
     }
 
+    public void setSourceFile(File sourceFile) {
+        _sourceFile = sourceFile;
+    }
+
     public File sourceFile() {
         return _sourceFile;
     }
 
+    public void setSourceOffset(long sourceOffset) {
+        _sourceOffset = sourceOffset;
+    }
+
     public long sourceOffset() {
         return _sourceOffset;
+    }
+
+    public void setSourceValueLength(long sourceValueLength) {
+        _sourceValueLength = sourceValueLength;
     }
 
     public long sourceValueLength() {
