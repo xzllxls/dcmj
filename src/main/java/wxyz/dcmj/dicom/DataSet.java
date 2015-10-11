@@ -25,6 +25,7 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
+import wxyz.dcmj.dicom.image.PhotometricInterpretation;
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
 import wxyz.dcmj.dicom.io.EncapsulatedInputStream;
@@ -520,7 +521,7 @@ public class DataSet {
                 }
             } else if (tag.equals(AttributeTag.TransferSyntaxUID)) {
                 if (in.isReadingFileMetaInfo()) {
-                    in.setDataSetTransferSyntax(TransferSyntax.get(de.stringValue(), TransferSyntax.ExplicitVRLittleEndian));
+                    in.setDataSetTransferSyntax(TransferSyntax.fromString(de.stringValue(), TransferSyntax.ExplicitVRLittleEndian));
                 } else {
                     // ignore it, e.g. nested within a sequence item (GE bug).
                 }
@@ -864,6 +865,27 @@ public class DataSet {
 
     public Collection<DataElement> elements() {
         return _des.values();
+    }
+
+    public void fixJpegPhotometricInterpretation() {
+        TransferSyntax ts = TransferSyntax.get(this, TransferSyntax.ExplicitVRLittleEndian);
+        CodeStringElement pie = (CodeStringElement) element(AttributeTag.PhotometricInterpretation);
+        if (pie == null) {
+            return;
+        }
+        PhotometricInterpretation pi = PhotometricInterpretation.fromString(pie.value());
+        if (pi == null) {
+            return;
+        }
+        if ((TransferSyntax.JPEGBaseline.equals(ts) || TransferSyntax.JPEGLossless.equals(ts)) && pi == PhotometricInterpretation.YBR_FULL_422) {
+            try {
+                pie.setValue(PhotometricInterpretation.RGB.toString());
+                System.out.println("Fixed JPEG photometric on " + stringValueOf(AttributeTag.SOPInstanceUID));
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
+            }
+        }
+
     }
 
     public static void main(String[] args) throws Throwable {

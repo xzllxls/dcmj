@@ -27,7 +27,7 @@ public class DicomInputStream extends EndianInputStream {
         // First make use of argument that overrides guesswork at transfer
         // syntax ...
         if (uid != null) {
-            TransferSyntax ts = TransferSyntax.get(uid, null);
+            TransferSyntax ts = TransferSyntax.fromString(uid, null);
             if (ts == null) {
                 throw new DicomException("Unknown transfer syntax uid: " + uid);
             }

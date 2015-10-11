@@ -54,6 +54,7 @@ public class DicomImageReader extends ImageReader {
                     _ds = new DataSet();
                     // only read metadata, stop at PixelData.
                     _ds.read(iis, AttributeTag.PixelData);
+                    _ds.fixJpegPhotometricInterpretation();
                 } catch (Throwable e) {
                     throw new IOException(e);
                 }

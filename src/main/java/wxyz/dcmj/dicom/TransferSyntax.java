@@ -120,7 +120,7 @@ public class TransferSyntax {
      */
     private static Map<String, TransferSyntax> _tss;
 
-    public static TransferSyntax get(String uid, TransferSyntax defaultValue) {
+    public static TransferSyntax fromString(String uid, TransferSyntax defaultValue) {
         if (_tss == null) {
             return defaultValue;
         }
@@ -130,6 +130,14 @@ public class TransferSyntax {
         } else {
             return ts;
         }
+    }
+
+    public static TransferSyntax get(DataSet ds, TransferSyntax defaultValue) {
+        String tsuid = ds.stringValueOf(AttributeTag.TransferSyntaxUID);
+        if (tsuid == null) {
+            return defaultValue;
+        }
+        return fromString(tsuid, defaultValue);
     }
 
     protected static void register(TransferSyntax ts) {
