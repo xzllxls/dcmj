@@ -37,7 +37,7 @@ public class DicomMetadata extends IIOMetadata {
 
     private DataSet _ds;
 
-    public DicomMetadata(String nativeMetadataFormatName, String nativeMetadataFormatClassName, DataSet ds) {
+    protected DicomMetadata(String nativeMetadataFormatName, String nativeMetadataFormatClassName, DataSet ds) {
         super(true, nativeMetadataFormatName, nativeMetadataFormatClassName, null, null);
         _ds = ds;
     }

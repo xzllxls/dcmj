@@ -39,12 +39,16 @@ public class AttributeTag implements Comparable<AttributeTag> {
 
     @Override
     public int hashCode() {
-        return (_group << 16) + (_element & 0xffff);
+        return toUnsignedInt();
     }
 
     @Override
     public String toString() {
         return String.format("(%04x,%04x)", _group, _element);
+    }
+
+    public int toUnsignedInt() {
+        return ((_group & 0xffff) << 16) | (_element & 0xffff);
     }
 
     @Override

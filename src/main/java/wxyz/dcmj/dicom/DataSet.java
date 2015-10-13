@@ -867,27 +867,6 @@ public class DataSet {
         return _des.values();
     }
 
-    public void fixJpegPhotometricInterpretation() {
-        TransferSyntax ts = TransferSyntax.get(this, TransferSyntax.ExplicitVRLittleEndian);
-        CodeStringElement pie = (CodeStringElement) element(AttributeTag.PhotometricInterpretation);
-        if (pie == null) {
-            return;
-        }
-        PhotometricInterpretation pi = PhotometricInterpretation.fromString(pie.value());
-        if (pi == null) {
-            return;
-        }
-        if ((TransferSyntax.JPEGBaseline.equals(ts) || TransferSyntax.JPEGLossless.equals(ts)) && pi == PhotometricInterpretation.YBR_FULL_422) {
-            try {
-                pie.setValue(PhotometricInterpretation.RGB.toString());
-                System.out.println("Fixed JPEG photometric on " + stringValueOf(AttributeTag.SOPInstanceUID));
-            } catch (Throwable e) {
-                e.printStackTrace(System.err);
-            }
-        }
-
-    }
-
     public static void main(String[] args) throws Throwable {
         DataSet ds1 = new DataSet();
         ds1.read(new File("/Users/wliu5/Desktop/1.dcm"));
