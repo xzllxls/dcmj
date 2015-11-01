@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
+import javax.imageio.stream.ImageInputStream;
+
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
 
@@ -21,6 +23,7 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
 
     //@formatter:off
     private File _sourceFile;         // optional: only useful if input source is a File.
+    private ImageInputStream _sourceImageInputStream;
     private long _sourceOffset;       // optional: only useful if input source is a File.
     private long _sourceValueLength;  // optional: useful for inline binary elements when not reading their values (to save memory)
     //@formatter:on
@@ -99,8 +102,9 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
 
     public abstract long valueLength();
 
-    void setSource(File sourceFile, long sourceOffset, long sourceValueLength) {
+    void setSource(File sourceFile, ImageInputStream sourceInputStream, long sourceOffset, long sourceValueLength) {
         _sourceFile = sourceFile;
+        _sourceImageInputStream = sourceInputStream;
         _sourceOffset = sourceOffset;
         _sourceValueLength = sourceValueLength;
     }
@@ -109,8 +113,16 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
         _sourceFile = sourceFile;
     }
 
+    public void setSourceImageInputStream(ImageInputStream imageInputStream) {
+        _sourceImageInputStream = imageInputStream;
+    }
+
     public File sourceFile() {
         return _sourceFile;
+    }
+
+    public ImageInputStream sourceImageInputStream() {
+        return _sourceImageInputStream;
     }
 
     public void setSourceOffset(long sourceOffset) {
@@ -479,6 +491,14 @@ public abstract class DataElement<T> implements Comparable<DataElement> {
             }
         }
         return sb.toString();
+    }
+
+    public boolean hasValue() {
+        return _values == null || _values.isEmpty();
+    }
+
+    public boolean hasSource() {
+        return (_sourceFile != null || _sourceImageInputStream != null) && _sourceOffset >= 0 && _sourceValueLength > 0;
     }
 
     @Override

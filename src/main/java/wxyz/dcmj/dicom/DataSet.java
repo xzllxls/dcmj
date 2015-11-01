@@ -25,7 +25,6 @@ import javax.imageio.event.IIOReadProgressListener;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
 
-import wxyz.dcmj.dicom.image.PhotometricInterpretation;
 import wxyz.dcmj.dicom.io.DicomInputStream;
 import wxyz.dcmj.dicom.io.DicomOutputStream;
 import wxyz.dcmj.dicom.io.EncapsulatedInputStream;
@@ -57,9 +56,14 @@ public class DataSet {
     protected double compressionRatio = 0.0;
 
     /*
-     * source file (if known)
+     * source file (if applicable)
      */
     private File _sourceFile;
+
+    /*
+     * source ImageInputStream (if applicable)
+     */
+    private ImageInputStream _sourceImageInputStream;
 
     /*
      * The sequence element that contains this dataset (item). For top level
@@ -78,6 +82,10 @@ public class DataSet {
 
     public File sourceFile() {
         return _sourceFile;
+    }
+
+    public ImageInputStream sourceImageInputStream() {
+        return _sourceImageInputStream;
     }
 
     SequenceElement sequence() {
@@ -111,6 +119,7 @@ public class DataSet {
     }
 
     public void read(ImageInputStream iis, AttributeTag stopAtTag) throws Throwable {
+        _sourceImageInputStream = iis;
         read(new DicomInputStream(iis), stopAtTag);
     }
 
@@ -246,7 +255,7 @@ public class DataSet {
             if (stopAtTag != null && tag.equals(stopAtTag) && !isSeqenceItem()) {
                 // Add the element but do not read its value
                 DataElement de = DataElement.create(this, tag, vr, scs);
-                de.setSource(sourceFile(), in.position(), vl);
+                de.setSource(sourceFile(), sourceImageInputStream(), in.position(), vl);
                 addElement(de);
                 return;
             }
@@ -257,7 +266,7 @@ public class DataSet {
             DataElement de = null;
             if (vr == ValueRepresentation.SQ) {
                 de = DataElement.create(this, tag, vr, scs);
-                de.setSource(sourceFile(), in.position(), vl);
+                de.setSource(sourceFile(), sourceImageInputStream(), in.position(), vl);
                 de.readValue(in, vl);
             } else if (vl != Constants.UNDEFINED_LENGTH) {
                 /*
@@ -282,7 +291,7 @@ public class DataSet {
                             + ") when recovering from incorrect Implicit VR element encoding in Explicit VR Transfer Syntax - giving up.");
                 }
                 de = DataElement.create(this, tag, vr, scs);
-                de.setSource(sourceFile(), in.position(), vl);
+                de.setSource(sourceFile(), sourceImageInputStream(), in.position(), vl);
                 de.readValue(in, vl);
             } else if (vl == Constants.UNDEFINED_LENGTH && tag.equals(AttributeTag.PixelData)) {
                 boolean doneReadingEncapsulatedData = false;
@@ -350,7 +359,8 @@ public class DataSet {
                         String readerVendorName = spi.getVendorName();
                         String readerVersion = spi.getVersion();
                         if (ts.equals(TransferSyntax.JPEGExtended) && readerDescription.equals("Standard JPEG Image Reader") && readerVendorName.equals("Sun Microsystems, Inc.")) {
-                            throw new DicomException("Image reader " + readerDescription + " " + readerVendorName + " " + readerVersion + " does not support extended lossy JPEG transfer syntax " + ts);
+                            throw new DicomException(
+                                    "Image reader " + readerDescription + " " + readerVendorName + " " + readerVersion + " does not support extended lossy JPEG transfer syntax " + ts);
                         }
                         reader.addIIOReadProgressListener(new IIOReadProgressListener() {
 
@@ -419,8 +429,8 @@ public class DataSet {
                                 reader.setInput(iiois, true/* seekForwardOnly */, true/* ignoreMetadata */);
                                 image = reader.read(0);
                                 if (image == null) {
-                                    throw new DicomException("Reader " + spi.getDescription(Locale.US) + " " + spi.getVendorName() + " " + spi.getVersion()
-                                            + " returned null image for Transfer Syntax " + ts);
+                                    throw new DicomException(
+                                            "Reader " + spi.getDescription(Locale.US) + " " + spi.getVendorName() + " " + spi.getVersion() + " returned null image for Transfer Syntax " + ts);
                                 } else {
                                     Raster raster = image.getData();
                                     int numDataElements = raster.getNumDataElements();

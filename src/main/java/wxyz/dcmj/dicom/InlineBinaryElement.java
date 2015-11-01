@@ -1,6 +1,9 @@
 package wxyz.dcmj.dicom;
 
+import java.io.RandomAccessFile;
 import java.util.Base64;
+
+import javax.imageio.stream.ImageInputStream;
 
 public abstract class InlineBinaryElement<T> extends DataElement<T> {
 
@@ -34,5 +37,27 @@ public abstract class InlineBinaryElement<T> extends DataElement<T> {
             T value = bytesToValue(b, bigEndian);
             setValue(value);
         }
+    }
+
+    public boolean readValueFromSource(boolean bigEndian) throws Throwable {
+        if (!hasValue() && hasSource() && sourceValueLength() < Constants.UNDEFINED_LENGTH) {
+            byte[] data = new byte[(int) sourceValueLength()];
+            if (sourceFile() != null) {
+                RandomAccessFile raf = new RandomAccessFile(sourceFile(), "r");
+                try {
+                    raf.seek(sourceOffset());
+                    raf.readFully(data);
+                } finally {
+                    raf.close();
+                }
+            } else {
+                ImageInputStream iis = sourceImageInputStream();
+                iis.seek(sourceOffset());
+                iis.readFully(data);
+            }
+            addValue(bytesToValue(data, bigEndian));
+            return true;
+        }
+        return false;
     }
 }
