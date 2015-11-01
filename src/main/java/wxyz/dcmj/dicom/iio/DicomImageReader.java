@@ -211,25 +211,25 @@ public class DicomImageReader extends ImageReader {
         int dataType;
         long dataOffset;
         int dataSize;
-        if ((pmi.isGrayScale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 8 && bitsAllocated <= 16) {
+        if ((pmi.isGrayscale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 8 && bitsAllocated <= 16) {
             dataType = signed ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
             dataSize = width * height * 2;
             dataOffset = pde.sourceOffset() + width * height * 2 * imageIndex;
-        } else if ((pmi.isGrayScale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 1 && bitsAllocated <= 8) {
+        } else if ((pmi.isGrayscale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 1 && bitsAllocated <= 8) {
             dataType = DataBuffer.TYPE_BYTE;
             dataSize = width * height * 1;
             dataOffset = pde.sourceOffset() + width * height * 1 * imageIndex;
-        } else if (pmi.isGrayScale() && samplesPerPixel == 1 && bitsAllocated == 1) {
+        } else if (pmi.isGrayscale() && samplesPerPixel == 1 && bitsAllocated == 1) {
             // TODO
-        } else if (!pmi.isGrayScale() && samplesPerPixel == 3 && bitsAllocated > 1 && bitsAllocated <= 8) {
+        } else if (!pmi.isGrayscale() && samplesPerPixel == 3 && bitsAllocated > 1 && bitsAllocated <= 8) {
             dataType = DataBuffer.TYPE_INT;
             dataSize = width * height * 3;
             dataOffset = pde.sourceOffset() + width * height * 3 * imageIndex;
-        } else if (pmi.isGrayScale() && samplesPerPixel == 1 && bitsAllocated == 32) {
+        } else if (pmi.isGrayscale() && samplesPerPixel == 1 && bitsAllocated == 32) {
             dataType = DataBuffer.TYPE_FLOAT;
             dataSize = width * height * 4;
             dataOffset = pde.sourceOffset() + width * height * 4 * imageIndex;
-        } else if (pmi.isGrayScale() && samplesPerPixel == 1 && bitsAllocated == 64) {
+        } else if (pmi.isGrayscale() && samplesPerPixel == 1 && bitsAllocated == 64) {
             dataType = DataBuffer.TYPE_DOUBLE;
             dataSize = width * height * 8;
             dataOffset = pde.sourceOffset() + width * height * 8 * imageIndex;

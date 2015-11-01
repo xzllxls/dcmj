@@ -37,7 +37,7 @@ public enum PhotometricInterpretation {
         return this == MONOCHROME1 || this == MONOCHROME2;
     }
 
-    public boolean isGrayScale() {
+    public boolean isGrayscale() {
         return isMonochrome();
     }
 
@@ -45,7 +45,7 @@ public enum PhotometricInterpretation {
         return this == PALETTE_COLOR;
     }
 
-    public boolean isInvertedGrayScale() {
+    public boolean isInvertedGrayscale() {
         return this == MONOCHROME1;
     }
 

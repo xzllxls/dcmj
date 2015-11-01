@@ -227,7 +227,7 @@ public class ImageReaderUtils {
         }
 
         BufferedImageSource source = null;
-        if ((pmi.isGrayScale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 8 && bitsAllocated <= 16) {
+        if ((pmi.isGrayscale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated > 8 && bitsAllocated <= 16) {
             // grayscale or palette color 9-16 bits
             // note that imgMin and imgMax are populated on demand
             // BufferedImages are actually created
@@ -237,7 +237,7 @@ public class ImageReaderUtils {
             } else {
                 source = new GrayscaleUnsignedShortBufferedImageSource(width, height, numberOfFrames, data, mask, largestGray);
             }
-        } else if ((pmi.isGrayScale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated <= 8 && bitsAllocated > 1) {
+        } else if ((pmi.isGrayscale() || pmi.isPaletteColor()) && samplesPerPixel == 1 && bitsAllocated <= 8 && bitsAllocated > 1) {
             // grayscale or palette color <= 8 bits
             byte data[] = null;
             if (pixelDataElement instanceof OtherByteElement) {
@@ -297,7 +297,7 @@ public class ImageReaderUtils {
                 }
             }
             source = new GrayscaleByteBufferedImageSource(width, height, numberOfFrames, data);
-        } else if (pmi.isGrayScale() && samplesPerPixel == 1 && bitsAllocated == 1) {
+        } else if (pmi.isGrayscale() && samplesPerPixel == 1 && bitsAllocated == 1) {
             // single bit
             BufferedImage[] imgs = new BufferedImage[numberOfFrames];
             IndexColorModel colorModel = null;
@@ -362,7 +362,7 @@ public class ImageReaderUtils {
                 }
             }
             source = new ArrayBufferedImageSource(width, height, samplesPerPixel, imgs);
-        } else if (!pmi.isGrayScale() && samplesPerPixel == 3 && bitsAllocated <= 8 && bitsAllocated > 1) {
+        } else if (!pmi.isGrayscale() && samplesPerPixel == 3 && bitsAllocated <= 8 && bitsAllocated > 1) {
             // not grayscale, is 3 channel and <= 8 bits");
 
             byte data[] = null;
